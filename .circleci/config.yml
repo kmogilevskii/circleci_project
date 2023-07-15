@@ -128,16 +128,50 @@ jobs:
       - run:
           name: Check Frontend against security vulnerabilities
           working_directory: ./frontend
-          command: npm audit fix --force && npm audit fix --force && npm audit --audit-level=critical
+          command: npm install && npm audit fix --force && npm audit fix --force && npm audit --audit-level=critical
+
+  deploy-infrastructure:
+    executor: aws
+    steps:
+      - checkout
+      - run:
+          name: Deploy Backend Infrastructure
+          working_directory: .circleci/files
+          command: |
+            aws cloudformation deploy \
+              --template-file backend.yaml \
+              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
+      - run:
+          name: Deploy frontend infrastructure
+          working_directory: .circleci/files
+          command: |
+            aws cloudformation deploy \
+              --template-file frontend.yaml \
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+      - run:
+          name: Add backend ip to ansible inventory
+          working_directory: .circleci/ansible
+          command: |
+            BACKEND_IP=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:project,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --output text)
+            
+            echo $BACKEND_IP >> inventory
+            cat inventory
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .circleci/ansible/inventory
 
 workflows:
   default:
     jobs:
       - install-backend-dependencies
-#          filters:
-#            branches:
-#              ignore:
-#                - main
       - install-frontend-dependencies
       - build-backend:
           requires:
@@ -157,3 +191,8 @@ workflows:
       - scan-frontend:
           requires:
             - build-frontend
+      - deploy-infrastructure:
+          filters:
+            branches:
+              only:
+                - master
