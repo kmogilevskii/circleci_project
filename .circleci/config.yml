@@ -19,9 +19,9 @@ jobs:
     steps:
       - checkout
       - run:
-          name: npm install
+          name: npm install backend
           working_directory: ./backend
-          command: ls -la && npm install
+          command: npm install
       - persist_to_workspace:
           root: .
           paths:
@@ -32,16 +32,56 @@ jobs:
     steps:
       - checkout
       - run:
-          name: npm install
+          name: npm install frontend
           working_directory: ./frontend
-          command: ls -la && npm install
+          command: npm install
       - persist_to_workspace:
           root: .
           paths:
             - frontend/node_modules
 
+  build-backend:
+    executor: node
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: npm run build
+          working_directory: ./backend
+          command: npm run build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - backend/dist
+
+  build-frontend:
+    executor: node
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: npm run build
+          working_directory: ./frontend
+          command: npm run build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/dist
+
 workflows:
   default:
     jobs:
       - install-backend-dependencies
+          filters:
+            branches:
+              ignore:
+                - main
       - install-frontend-dependencies
+      - build-backend:
+          requires:
+            - install-backend-dependencies
+      - build-frontend:
+          requires:
+            - install-frontend-dependencies
