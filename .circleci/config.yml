@@ -135,6 +135,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install dependencies
+          command: yum install -y tar
+      - run:
           name: Deploy Backend Infrastructure
           working_directory: .circleci/files
           command: |
