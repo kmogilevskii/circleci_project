@@ -40,3 +40,8 @@ jobs:
           paths:
             - frontend/node_modules
 
+workflows:
+  default:
+    jobs:
+      - install-backend-dependencies
+      - install-frontend-dependencies
