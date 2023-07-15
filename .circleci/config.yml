@@ -74,10 +74,9 @@ workflows:
   default:
     jobs:
       - install-backend-dependencies
-          filters:
-            branches:
-              ignore:
-                - main
+          branches:
+            ignore:
+              - main
       - install-frontend-dependencies
       - build-backend:
           requires:
