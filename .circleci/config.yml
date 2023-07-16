@@ -236,6 +236,7 @@ jobs:
           paths:
             - backend/migration_status
       - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
           when: on_fail
 
 workflows:
