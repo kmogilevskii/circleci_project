@@ -303,9 +303,9 @@ workflows:
             branches:
               only:
                 - main
-      - configure-server:
-          requires:
-            - deploy-infrastructure
+#      - configure-server:
+#          requires:
+#            - deploy-infrastructure
       - run-migrations:
           requires:
             - test-backend
@@ -319,4 +319,4 @@ workflows:
                 - main
       - deploy-backend:
           requires:
-            - configure-server
+            - deploy-infrastructure
