@@ -3,6 +3,12 @@
     become: yes
     apt:
       update_cache: yes
+      cache_valid_time: 3600
+    register: apt_result
+    retries: 3
+    delay: 1
+    sudo: yes
+    ignore_errors: yes
 
   - name: "upgrade packages"
     become: yes
