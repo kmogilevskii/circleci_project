@@ -1,14 +1,7 @@
 ---
   - name: "update apt packages."
     become: yes
-    apt:
-      update_cache: yes
-      cache_valid_time: 3600
-    register: apt_result
-    retries: 3
-    delay: 1
-    sudo: yes
-    ignore_errors: yes
+    shell: apt-get clean && apt-get update
 
   - name: "upgrade packages"
     become: yes
