@@ -212,6 +212,7 @@ jobs:
             apk add --update ansible
             ansible --version
             pip install awscli
+            cat inventory
       - run:
           name: Configure server
           working_directory: .circleci/ansible
