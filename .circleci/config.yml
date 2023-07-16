@@ -237,12 +237,38 @@ jobs:
           name: Run migrations
           working_directory: backend
           command: |
+            la -la
+            npm install
             npm run migrations > migration_status
             cat migration_status
       - persist_to_workspace:
           root: .
           paths:
             - backend/migration_status
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
+
+  deploy-backend:
+    executor: python
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["e0:bd:8d:88:d7:8f:9d:c2:5f:6d:c5:cd:da:22:30:9a"]
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install dependencies
+          working_directory: /tmp
+          command: |
+            apk add --update ansible curl rsync openssh nodejs npm
+            ansible --version
+            pip install awscli
+            aws --version
+      - run:
+          name: Deploy backend
+          working_directory: .circleci/ansible
+          command: ansible-playbook -i inventory deploy-server.yml -vv
       - destroy_environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}
           when: on_fail
@@ -290,3 +316,10 @@ workflows:
             branches:
               only:
                 - main
+      - deploy-backend:
+          requires:
+            - test-backend
+            - test-frontend
+            - scan-backend
+            - scan-frontend
+            - configure-server
