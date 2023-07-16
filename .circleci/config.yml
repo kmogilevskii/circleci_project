@@ -277,7 +277,7 @@ workflows:
             - test-frontend
             - scan-backend
             - scan-frontend
-            - configure-infrastructure
+            - configure-server
           filters:
             branches:
               only:
