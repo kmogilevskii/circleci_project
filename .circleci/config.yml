@@ -50,18 +50,18 @@ jobs:
           paths:
             - backend/node_modules
 
-#  install-frontend-dependencies:
-#    executor: node
-#    steps:
-#      - checkout
-#      - run:
-#          name: npm install frontend
-#          working_directory: ./frontend
-#          command: npm install
-#      - persist_to_workspace:
-#          root: .
-#          paths:
-#            - frontend/node_modules
+  install-frontend-dependencies:
+    executor: node
+    steps:
+      - checkout
+      - run:
+          name: npm install frontend
+          working_directory: frontend
+          command: npm install
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/node_modules
 
   build-backend:
     executor: node
@@ -86,7 +86,7 @@ jobs:
 #          at: .
 #      - run:
 #          name: npm run build frontend
-#          working_directory: ./frontend
+#          working_directory: frontend
 #          command: npm run build
 #      - persist_to_workspace:
 #          root: .
@@ -105,31 +105,31 @@ jobs:
           command: npm install --save-dev jest-junit
       - run:
           name: Run tests with JUnit as reporter
-          working_directory: ./backend
-          command: npm test -- --ci --runInBand --reporters=default --reporters=jest-junit && pwd
+          working_directory: backend
+          command: npm test -- --ci --runInBand --reporters=default --reporters=jest-junit
           environment:
-            JEST_JUNIT_OUTPUT_DIR: ./test_results
+            JEST_JUNIT_OUTPUT_DIR: test_results
       - store_test_results:
-          path: ./backend/test_results
+          path: backend/test_results
 
-#  test-frontend:
-#    executor: node
-#    steps:
-#      - checkout
-#      - attach_workspace:
-#          at: .
-#      - run:
-#          name: Install junit coverage reporter
-#          working_directory: ./frontend
-#          command: npm install --save-dev jest-junit
-#      - run:
-#          name: Run tests with JUnit as reporter
-#          working_directory: ./frontend
-#          command: npm test -- --ci --runInBand --reporters=default --reporters=jest-junit && pwd && ls -la /tmp
-#          environment:
-#            JEST_JUNIT_OUTPUT_DIR: ./test_results
-#      - store_test_results:
-#          path: ./frontend/test_results
+  test-frontend:
+    executor: node
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install junit coverage reporter
+          working_directory: frontend
+          command: npm install --save-dev jest-junit
+      - run:
+          name: Run tests with JUnit as reporter
+          working_directory: frontend
+          command: npm test -- --ci --runInBand --reporters=default --reporters=jest-junit
+          environment:
+            JEST_JUNIT_OUTPUT_DIR: test_results
+      - store_test_results:
+          path: frontend/test_results
 
 #  scan-backend:
 #    executor: node
@@ -169,15 +169,15 @@ jobs:
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
               --tags project=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
-#      - run:
-#          name: Deploy frontend infrastructure
-#          working_directory: .circleci/files
-#          command: |
-#            aws cloudformation deploy \
-#              --template-file frontend.yml \
-#              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-#              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
-#              --tags project=udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+      - run:
+          name: Deploy frontend infrastructure
+          working_directory: .circleci/files
+          command: |
+            aws cloudformation deploy \
+              --template-file frontend.yml \
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: Add backend ip to ansible inventory
           working_directory: .circleci/ansible
@@ -270,15 +270,48 @@ jobs:
           name: Deploy backend
           working_directory: .circleci/ansible
           command: ansible-playbook -i inventory deploy-server.yml -vv
-#      - destroy_environment:
-#          id: ${CIRCLE_WORKFLOW_ID:0:7}
-#          when: on_fail
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
+
+  deploy-frontend:
+    executor: node
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install AWS CLI dependencies
+          working_directory: /tmp
+          command: |
+            sudo apt-get update && sudo apt-get install -yy less
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+      - run:
+          name: Rebuild frontend with backend API Url
+          working_directory: frontend
+          command: |
+            ls -la
+            ls -la ../.circleci/ansible
+            npm run build
+      - run:
+          name: Deploy frontend objects to S3
+          working_directory: frontend
+          command: aws s3 cp ./dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/dist
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
 
 workflows:
   default:
     jobs:
       - install-backend-dependencies
-#      - install-frontend-dependencies
+      - install-frontend-dependencies
       - build-backend:
           requires:
             - install-backend-dependencies
@@ -288,9 +321,9 @@ workflows:
       - test-backend:
           requires:
             - build-backend
-#      - test-frontend:
-#          requires:
-#            -  build-frontend
+      - test-frontend:
+          requires:
+            - install-frontend-dependencies
 #      - scan-backend:
 #          requires:
 #            - build-backend
@@ -305,6 +338,7 @@ workflows:
                 - main
           requires:
             - test-backend
+            - test-frontend
 #      - configure-server:
 #          requires:
 #            - deploy-infrastructure
@@ -324,6 +358,13 @@ workflows:
 #              only:
 #                - main
       - deploy-backend:
+          requires:
+            - deploy-infrastructure
+          filters:
+            branches:
+              only:
+                - main
+      - deploy-frontend:
           requires:
             - deploy-infrastructure
           filters:
