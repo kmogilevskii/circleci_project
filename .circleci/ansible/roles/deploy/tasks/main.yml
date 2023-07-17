@@ -1,8 +1,5 @@
 ---
-  - name: "show remote environment"
-    shell: env
-
-  - name: "copy backend binaries"
+- name: "copy backend binaries"
     become: yes
     synchronize:
       src: ../../backend/dist
@@ -23,9 +20,9 @@
 
   - name: "start server"
     become: true
-    command: pm2 start -f ./main.js
     args:
       chdir: /home/ubuntu/uda_app/dist
+    command: pm2 start -f ./main.js
     environment:
      ENVIRONMENT: production
      TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"

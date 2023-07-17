@@ -43,7 +43,7 @@ jobs:
       - checkout
       - run:
           name: npm install backend
-          working_directory: ./backend
+          working_directory: backend
           command: npm install
       - persist_to_workspace:
           root: .
@@ -71,7 +71,7 @@ jobs:
           at: .
       - run:
           name: npm run build backend
-          working_directory: ./backend
+          working_directory: backend
           command: npm run build
       - persist_to_workspace:
           root: .
@@ -102,9 +102,7 @@ jobs:
       - run:
           name: Install junit coverage reporter
           working_directory: backend
-          command: |
-            ls -la
-            npm install --save-dev jest-junit
+          command: npm install --save-dev jest-junit
       - run:
           name: Run tests with JUnit as reporter
           working_directory: ./backend
@@ -162,15 +160,10 @@ jobs:
       - run:
           name: Install dependencies
           command: yum install -y tar gzip # required for the persist_to_workspace
-      - attach_workspace:
-          at: .
       - run:
           name: Deploy Backend Infrastructure
           working_directory: .circleci/files
           command: |
-            ls -la ../../backend
-            ls -la ../../backend/dist
-            ls -la ../../backend/node_modules
             aws cloudformation deploy \
               --template-file backend.yml \
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
@@ -315,13 +308,13 @@ workflows:
                 - main
           requires:
             - test-backend
-#      - configure-server:
-#          filters:
-#            branches:
-#              only:
-#                - main
-#          requires:
-#            - deploy-infrastructure
+      - configure-server:
+          requires:
+            - deploy-infrastructure
+          filters:
+            branches:
+              only:
+                - main
 #      - run-migrations:
 #          requires:
 #            - test-backend
@@ -333,10 +326,10 @@ workflows:
 #            branches:
 #              only:
 #                - main
-#      - deploy-backend:
-#          filters:
-#            branches:
-#              only:
-#                - main
-#          requires:
-#            - deploy-infrastructure
+      - deploy-backend:
+          requires:
+            - configure-server
+          filters:
+            branches:
+              only:
+                - main
