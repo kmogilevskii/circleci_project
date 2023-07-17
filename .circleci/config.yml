@@ -169,7 +169,8 @@ jobs:
           working_directory: .circleci/files
           command: |
             ls -la ../../backend
-            ls -la ../../frontend
+            ls -la ../../backend/dist
+            ls -la ../../backend/node_modules
             aws cloudformation deploy \
               --template-file backend.yml \
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
@@ -313,7 +314,7 @@ workflows:
               only:
                 - main
           requires:
-            - build-backend
+            - test-backend
 #      - configure-server:
 #          filters:
 #            branches:
@@ -332,10 +333,10 @@ workflows:
 #            branches:
 #              only:
 #                - main
-      - deploy-backend:
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - deploy-infrastructure
+#      - deploy-backend:
+#          filters:
+#            branches:
+#              only:
+#                - main
+#          requires:
+#            - deploy-infrastructure
