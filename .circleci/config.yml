@@ -165,11 +165,11 @@ jobs:
     executor: aws
     steps:
       - checkout
-      - attach_workspace:
-          at: .
       - run:
           name: Install dependencies
           command: yum install -y tar gzip # required for the persist_to_workspace
+      - attach_workspace:
+          at: .
       - run:
           name: Deploy Backend Infrastructure
           working_directory: .circleci/files
