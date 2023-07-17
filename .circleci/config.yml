@@ -269,7 +269,10 @@ jobs:
       - run:
           name: Deploy backend
           working_directory: .circleci/ansible
-          command: ansible-playbook -i inventory deploy-server.yml -vv
+          command: |
+            ls -la
+            ls -la ../../backend/
+            ansible-playbook -i inventory deploy-server.yml -vv
       - destroy_environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}
           when: on_fail
@@ -304,6 +307,10 @@ workflows:
               only:
                 - main
       - configure-server:
+          filters:
+            branches:
+              only:
+                - main
           requires:
             - deploy-infrastructure
 #      - run-migrations:
@@ -317,6 +324,10 @@ workflows:
 #            branches:
 #              only:
 #                - main
-#      - deploy-backend:
-#          requires:
-#            - deploy-infrastructure
+      - deploy-backend:
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - configure-server
