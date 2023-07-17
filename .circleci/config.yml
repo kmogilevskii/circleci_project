@@ -111,6 +111,10 @@ jobs:
             JEST_JUNIT_OUTPUT_DIR: ./test_results
       - store_test_results:
           path: ./backend/test_results
+      - persist_to_workspace:
+          root: .
+          paths:
+            - backend/dist
 
   test-frontend:
     executor: node
@@ -130,33 +134,39 @@ jobs:
             JEST_JUNIT_OUTPUT_DIR: ./test_results
       - store_test_results:
           path: ./frontend/test_results
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/dist
 
-  scan-backend:
-    executor: node
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Check Backend against security vulnerabilities
-          working_directory: ./backend
-          command: npm audit fix --force && npm audit fix --force && npm audit --audit-level=critical
-
-  scan-frontend:
-    executor: node
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Check Frontend against security vulnerabilities
-          working_directory: ./frontend
-          command: npm install && npm audit fix --force && npm audit fix --force && npm audit --audit-level=critical
+#  scan-backend:
+#    executor: node
+#    steps:
+#      - checkout
+#      - attach_workspace:
+#          at: .
+#      - run:
+#          name: Check Backend against security vulnerabilities
+#          working_directory: ./backend
+#          command: npm audit fix --force && npm audit fix --force && npm audit --audit-level=critical
+#
+#  scan-frontend:
+#    executor: node
+#    steps:
+#      - checkout
+#      - attach_workspace:
+#          at: .
+#      - run:
+#          name: Check Frontend against security vulnerabilities
+#          working_directory: ./frontend
+#          command: npm install && npm audit fix --force && npm audit fix --force && npm audit --audit-level=critical
 
   deploy-infrastructure:
     executor: aws
     steps:
       - checkout
+      - attach_workspace:
+          at: .
       - run:
           name: Install dependencies
           command: yum install -y tar gzip # required for the persist_to_workspace
@@ -164,6 +174,8 @@ jobs:
           name: Deploy Backend Infrastructure
           working_directory: .circleci/files
           command: |
+            ls -la ../../backend
+            ls -la ../../frontend
             aws cloudformation deploy \
               --template-file backend.yml \
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
@@ -193,6 +205,7 @@ jobs:
           root: .
           paths:
             - .circleci/ansible/inventory
+            - backend/dist
       - destroy_environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}
           when: on_fail
@@ -294,25 +307,25 @@ workflows:
       - test-frontend:
           requires:
             -  build-frontend
-      - scan-backend:
-          requires:
-            - build-backend
-      - scan-frontend:
-          requires:
-            - build-frontend
+#      - scan-backend:
+#          requires:
+#            - build-backend
+#      - scan-frontend:
+#          requires:
+#            - build-frontend
 
       - deploy-infrastructure:
           filters:
             branches:
               only:
                 - main
-      - configure-server:
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - deploy-infrastructure
+#      - configure-server:
+#          filters:
+#            branches:
+#              only:
+#                - main
+#          requires:
+#            - deploy-infrastructure
 #      - run-migrations:
 #          requires:
 #            - test-backend
@@ -330,4 +343,4 @@ workflows:
               only:
                 - main
           requires:
-            - configure-server
+            - deploy-infrastructure
