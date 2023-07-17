@@ -305,13 +305,13 @@ workflows:
                 - main
           requires:
             - test-backend
-      - configure-server:
-          requires:
-            - deploy-infrastructure
-          filters:
-            branches:
-              only:
-                - main
+#      - configure-server:
+#          requires:
+#            - deploy-infrastructure
+#          filters:
+#            branches:
+#              only:
+#                - main
 #      - run-migrations:
 #          requires:
 #            - test-backend
@@ -325,7 +325,7 @@ workflows:
 #                - main
       - deploy-backend:
           requires:
-            - configure-server
+            - deploy-infrastructure
           filters:
             branches:
               only:
