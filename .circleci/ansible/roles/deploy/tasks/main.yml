@@ -1,10 +1,10 @@
 ---
 - name: "copy backend binaries"
-    become: yes
-    synchronize:
-      src: ../../backend/dist
-      dest: /home/ubuntu/uda_app
-      recursive: true
+  become: yes
+  synchronize:
+    src: ../../backend/dist
+    dest: /home/ubuntu/uda_app
+    recursive: true
 
   - name: "copy node_modules"
     become: yes
