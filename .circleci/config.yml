@@ -215,7 +215,6 @@ jobs:
           name: Run migrations
           working_directory: backend
           command: |
-            la -la
             npm install
             npm run migrations > migration_status
             cat migration_status
@@ -300,8 +299,16 @@ jobs:
           name: Backend smoke test.
           working_directory: backend
           command: |
-            export BACKEND_URL=$(sed -n '2p' ../.circleci/ansible/inventory)
-            curl "$BACKEND_URL/api/status"
+            export BACKEND_IP=$(sed -n '2p' ../.circleci/ansible/inventory)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo $API_URL
+
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+              return 0
+            else
+              return 1
+            fi
       - run:
           name: Frontend smoke test.
           working_directory: backend
@@ -344,17 +351,9 @@ workflows:
           requires:
             - test-backend
             - test-frontend
-#      - run-migrations:
-#          requires:
-#            - test-backend
-#            - test-frontend
-#            - scan-backend
-#            - scan-frontend
-#            - configure-server
-#          filters:
-#            branches:
-#              only:
-#                - main
+      - run-migrations:
+          requires:
+            - deploy-infrastructure
       - deploy-backend:
           requires:
             - deploy-infrastructure
