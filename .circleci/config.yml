@@ -239,7 +239,6 @@ jobs:
           name: Send migration results to AWS Secret Manager
           working_directory: backend
           command: |
-            AWS_PAGER=''
             if grep -q "has been executed successfully" migration_status
             then
               echo "DB migration was successful, will update AWS Secret Manager..."
@@ -249,9 +248,9 @@ jobs:
               aws secretsmanager put-secret-value --secret-id udacity-migration-status --secret-string "failure"
             fi
             echo "WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}"
-#      - destroy_environment:
-#          id: ${CIRCLE_WORKFLOW_ID:0:7}
-#          when: on_fail
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
 
   deploy-backend:
     executor: python
@@ -273,11 +272,11 @@ jobs:
           name: Deploy backend
           working_directory: .circleci/ansible
           command: ansible-playbook -i inventory deploy-server.yml -vv
-#      - destroy_environment:
-#          id: ${CIRCLE_WORKFLOW_ID:0:7}
-#          when: on_fail
-#      - revert_migrations:
-#          when: on_fail
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
+      - revert_migrations:
+          when: on_fail
 
   deploy-frontend:
     executor: node
@@ -339,6 +338,7 @@ jobs:
           working_directory: backend
           command: |
             URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-east-1.amazonaws.com/index.html"
+            echo $URL
             curl -s ${URL} | grep -q "Welcome"
       - destroy_environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -357,19 +357,11 @@ jobs:
             curl -sL https://rpm.nodesource.com/setup_10.x | bash -
             yum install -y nodejs
       - run:
-          name: Store old WorkflowID in AWS Secret Manager for cleanup phase
-          working_directory: .circleci/files
-          command: |
-            WorkflowID=$(aws cloudformation \
-              list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
-              --no-paginate --output text)
-            echo $WorkflowID
-      - run:
           name: Update cloudfront distribution
           working_directory: .circleci/files
           command: |
             aws cloudformation deploy \
-              --template-file cloudfront.yaml \
+              --template-file cloudfront.yml \
               --stack-name udapeople-cloudfront-production \
               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
               --tags project=udapeople
