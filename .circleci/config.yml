@@ -373,7 +373,7 @@ jobs:
       - run:
           name: Clean up old environment
           command: |
-            sudo yum install -y jq
+            yum install -y jq
             OldWorkflowID=$(aws secretsmanager get-secret-value --secret-id udacity-circleci-project | jq .SecretString | tr -d \")
             echo $OldWorkflowID
             CurrentWorkflowID=${CIRCLE_WORKFLOW_ID:0:7}
