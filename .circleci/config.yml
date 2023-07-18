@@ -39,19 +39,15 @@ commands:
     parameters:
       when:
         type: string
-      id:
-        type: string
     steps:
       - run:
           name: Revert migrations
           working_directory: backend
           command: |
-            SUCCESS=$(curl -H "token: 2a9e15d6-b9fa-4b1f-a5dc-e3b9643a9b63" --request GET https://api.memstash.io/values/DB_MIGRATION_<< parameters.id >>)
+            SUCCESS=$(aws secretsmanager get-secret-value --secret-id udacity-migration-status | jq .SecretString | tr -d \")
             echo $SUCCESS
             if [[ "$SUCCESS" == "success" ]]
             then
-              pwd
-              ls -la
               npm run migrations:revert
             fi
           when: << parameters.when >>
@@ -236,13 +232,20 @@ jobs:
           name: Run migrations
           working_directory: backend
           command: |
-            npm install
             npm run migrations > migration_status
-            cat migration_status
-      - persist_to_workspace:
-          root: .
-          paths:
-            - backend/migration_status
+     - run:
+          name: Send migration results to AWS Secret Manager
+          working_directory: backend
+          command: |
+            if grep -q "has been executed successfully" migration_status
+            then
+              echo "DB migration was successful, will update AWS Secret Manager..."
+              aws secretsmanager put-secret-value --secret-id udacity-migration-status --secret-string "success"
+            else
+              echo "DB migration failed, please verify setup! Probably the database already exists. Verify setup!"
+            aws secretsmanager put-secret-value --secret-id udacity-migration-status --secret-string "failure"
+            fi
+            echo "WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}"
       - destroy_environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}
           when: on_fail
@@ -269,6 +272,8 @@ jobs:
           command: ansible-playbook -i inventory deploy-server.yml -vv
       - destroy_environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
+      - revert_migrations:
           when: on_fail
 
   deploy-frontend:
@@ -303,6 +308,8 @@ jobs:
       - destroy_environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}
           when: on_fail
+      - revert_migrations:
+          when: on_fail
 
   smoke-test:
     executor: python
@@ -323,22 +330,68 @@ jobs:
             export BACKEND_IP=$(sed -n '2p' ../.circleci/ansible/inventory)
             export API_URL="http://${BACKEND_IP}:3030"
             echo $API_URL
-
-            if curl "${API_URL}/api/status" | grep "ok"
-            then
-              return 0
-            else
-              return 1
-            fi
+            curl "${API_URL}/api/status" | grep "ok"
       - run:
           name: Frontend smoke test.
           working_directory: backend
           command: |
             URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-east-1.amazonaws.com/index.html"
             curl -s ${URL} | grep -q "Welcome"
-#      - destroy_environment:
-#          id: ${CIRCLE_WORKFLOW_ID:0:7}
-#          when: on_fail
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
+      - revert_migrations:
+          when: on_fail
+
+  cloudfront-update:
+    executor: aws
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            yum install -y tar gzip curl
+            curl -sL https://rpm.nodesource.com/setup_10.x | bash -
+            yum install -y nodejs
+      - run:
+          name: Store old WorkflowID in AWS Secret Manager for cleanup phase
+          working_directory: .circleci/files
+          command: |
+            WorkflowID=$(aws cloudformation \
+              list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+              --no-paginate --output text)
+            echo $WorkflowID
+      - run:
+          name: Update cloudfront distribution
+          working_directory: .circleci/files
+          command: |
+            aws cloudformation deploy \
+              --template-file cloudfront.yaml \
+              --stack-name udapeople-cloudfront-production \
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople
+
+  cleanup:
+    executor: aws
+    steps:
+      - checkout
+      - run:
+          name: Clean up old environment
+          command: |
+            OldWorkflowID=$(aws secretsmanager get-secret-value --secret-id udacity-circleci-project | jq .SecretString | tr -d \")
+            CurrentWorkflowID=${CIRCLE_WORKFLOW_ID:0:7}
+
+            if [[ "$CurrentWorkflowID" != "$OldWorkflowID" ]]
+            then
+              echo "$OldWorkflowID!=$CurrentWorkflowID => will delete old version"
+
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws secretsmanager put-secret-value --secret-id udacity-circleci-project --secret-string "$CurrentWorkflowID"
+            else
+              echo "$OldWorkflowID==$CurrentWorkflowID => nothing needs to be done..."
+            fi
 
 workflows:
   default:
@@ -385,3 +438,9 @@ workflows:
           requires:
             - deploy-backend
             - deploy-frontend
+      - cloudfront-update:
+          requires:
+            - smoke-test
+      - cleanup:
+          requires:
+            - cloudfront-update
