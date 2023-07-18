@@ -232,7 +232,9 @@ jobs:
           name: Run migrations
           working_directory: backend
           command: |
+            npm install
             npm run migrations > migration_status
+            cat migration_status
       - run:
           name: Send migration results to AWS Secret Manager
           working_directory: backend
@@ -243,7 +245,7 @@ jobs:
               aws secretsmanager put-secret-value --secret-id udacity-migration-status --secret-string "success"
             else
               echo "DB migration failed, please verify setup! Probably the database already exists. Verify setup!"
-            aws secretsmanager put-secret-value --secret-id udacity-migration-status --secret-string "failure"
+              aws secretsmanager put-secret-value --secret-id udacity-migration-status --secret-string "failure"
             fi
             echo "WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}"
       - destroy_environment:
@@ -262,7 +264,7 @@ jobs:
           name: Install dependencies
           working_directory: /tmp
           command: |
-            apk add --update ansible curl rsync openssh nodejs npm
+            apk add --update ansible curl rsync openssh nodejs npm jq
             ansible --version
             pip install awscli
             aws --version
@@ -286,7 +288,7 @@ jobs:
           name: Install AWS CLI dependencies
           working_directory: /tmp
           command: |
-            sudo apt-get update && sudo apt-get install -yy less
+            sudo apt-get update && sudo apt-get install -yy less jq
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
             sudo ./aws/install
