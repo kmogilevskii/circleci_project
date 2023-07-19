@@ -191,7 +191,6 @@ jobs:
             
             echo $BACKEND_IP >> inventory
             cat inventory
-            return 1
       - persist_to_workspace:
           root: .
           paths:
