@@ -142,7 +142,7 @@ jobs:
       - run:
           name: Check Backend against security vulnerabilities
           working_directory: backend
-          command: npm audit fix --force && npm audit fix --force && npm audit --audit-level=critical
+          command: npm audit --audit-level=critical
 
   scan-frontend:
     executor: node
@@ -153,7 +153,7 @@ jobs:
       - run:
           name: Check Frontend against security vulnerabilities
           working_directory: frontend
-          command: npm install && npm audit fix --force && npm audit fix --force && npm audit --audit-level=critical
+          command: npm audit --audit-level=critical
 
   deploy-infrastructure:
     executor: aws
