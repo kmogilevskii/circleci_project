@@ -304,7 +304,7 @@ jobs:
           name: Install dependencies
           working_directory: /tmp
           command: |
-            apk add --update curl nodejs npm
+            apk add --update curl nodejs npm jq
             pip install awscli
       - run:
           name: Backend smoke test.
