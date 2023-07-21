@@ -40,17 +40,10 @@
       production: yes
       state: present
 
-  - name: "copy backend binaries"
+  - name: "copy backend"
     become: yes
     synchronize:
-      src: ../../backend/dist
-      dest: /home/ubuntu/uda_app
-      recursive: true
-
-  - name: "copy node_modules"
-    become: yes
-    synchronize:
-      src: ../../backend/node_modules
+      src: ../../backend
       dest: /home/ubuntu/uda_app
       recursive: true
 
@@ -62,8 +55,8 @@
   - name: "start server"
     become: true
     args:
-      chdir: /home/ubuntu/uda_app/dist
-    command: pm2 start -f ./main.js
+      chdir: /home/ubuntu/uda_app/backend
+    command: pm2 start -f ./dist/main.js
     environment:
       # - ENVIRONMENT: "{{ lookup('env', 'ENVIRONMENT') }}"
       - TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
