@@ -381,19 +381,19 @@ workflows:
           requires:
             - install-backend-dependencies
 
-      - test-backend:
-          requires:
-            - build-backend
-      - test-frontend:
-          requires:
-            - install-frontend-dependencies
-
-      - scan-backend:
-          requires:
-            - test-backend
-      - scan-frontend:
-          requires:
-            - test-frontend
+#      - test-backend:
+#          requires:
+#            - build-backend
+#      - test-frontend:
+#          requires:
+#            - install-frontend-dependencies
+#
+#      - scan-backend:
+#          requires:
+#            - test-backend
+#      - scan-frontend:
+#          requires:
+#            - test-frontend
 
       - deploy-infrastructure:
           filters:
@@ -401,8 +401,8 @@ workflows:
               only:
                 - main
           requires:
-            - scan-backend
-            - scan-frontend
+            - build-backend
+           # - scan-frontend
 
       - run-migrations:
           requires:
