@@ -259,11 +259,11 @@ jobs:
           name: Deploy backend
           working_directory: .circleci/ansible
           command: ansible-playbook -i inventory deploy-server.yml -vv
-      - destroy_environment:
-          id: ${CIRCLE_WORKFLOW_ID:0:7}
-          when: on_fail
-      - revert_migrations:
-          when: on_fail
+#      - destroy_environment:
+#          id: ${CIRCLE_WORKFLOW_ID:0:7}
+#          when: on_fail
+#      - revert_migrations:
+#          when: on_fail
 
   deploy-frontend:
     executor: node
@@ -290,11 +290,11 @@ jobs:
           name: Deploy frontend objects to S3
           working_directory: frontend
           command: aws s3 cp ./dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
-      - destroy_environment:
-          id: ${CIRCLE_WORKFLOW_ID:0:7}
-          when: on_fail
-      - revert_migrations:
-          when: on_fail
+#      - destroy_environment:
+#          id: ${CIRCLE_WORKFLOW_ID:0:7}
+#          when: on_fail
+#      - revert_migrations:
+#          when: on_fail
 
   smoke-test:
     executor: python
