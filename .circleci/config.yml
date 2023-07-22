@@ -426,12 +426,12 @@ workflows:
 #      - run-migrations:
 #          requires:
 #            - deploy-infrastructure
-#      - configure-infrastructure:
-#          requires:
-#            - deploy-infrastructure
-      - deploy-backend:
+      - configure-infrastructure:
           requires:
             - deploy-infrastructure
+#      - deploy-backend:
+#          requires:
+#            - deploy-infrastructure
 #      - deploy-frontend:
 #          requires:
 #            - deploy-infrastructure
