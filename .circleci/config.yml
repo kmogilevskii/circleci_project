@@ -171,15 +171,15 @@ jobs:
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
               --tags project=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
-      - run:
-          name: Deploy frontend infrastructure
-          working_directory: .circleci/files
-          command: |
-            aws cloudformation deploy \
-              --template-file frontend.yml \
-              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
-              --tags project=udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+#      - run:
+#          name: Deploy frontend infrastructure
+#          working_directory: .circleci/files
+#          command: |
+#            aws cloudformation deploy \
+#              --template-file frontend.yml \
+#              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+#              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+#              --tags project=udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: Add backend ip to ansible inventory
           working_directory: .circleci/ansible
@@ -195,9 +195,9 @@ jobs:
           root: .
           paths:
             - .circleci/ansible/inventory
-      - destroy_environment:
-          id: ${CIRCLE_WORKFLOW_ID:0:7}
-          when: on_fail
+#      - destroy_environment:
+#          id: ${CIRCLE_WORKFLOW_ID:0:7}
+#          when: on_fail
 
   run-migrations:
     executor: node
@@ -375,7 +375,7 @@ workflows:
   default:
     jobs:
       - install-backend-dependencies
-      - install-frontend-dependencies
+      #- install-frontend-dependencies
 
       - build-backend:
           requires:
@@ -404,21 +404,21 @@ workflows:
             - build-backend
            # - scan-frontend
 
-      - run-migrations:
-          requires:
-            - deploy-infrastructure
+#      - run-migrations:
+#          requires:
+#            - deploy-infrastructure
 
       - deploy-backend:
           requires:
             - deploy-infrastructure
-      - deploy-frontend:
-          requires:
-            - deploy-infrastructure
-
-      - smoke-test:
-          requires:
-            - deploy-backend
-            - deploy-frontend
+#      - deploy-frontend:
+#          requires:
+#            - deploy-infrastructure
+#
+#      - smoke-test:
+#          requires:
+#            - deploy-backend
+#            - deploy-frontend
 
 #      - cloudfront-update:
 #          requires:
