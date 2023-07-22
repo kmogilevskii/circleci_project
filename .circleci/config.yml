@@ -23,9 +23,8 @@ commands:
         type: string
     steps:
       - run:
-          name: Destroy udapeople backend cfn stack
-          command: |
-            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >>
+          name: Destroy Udapeople Backend CFN Stack
+          command: aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >>
           when: << parameters.when >>
       - run:
           name: Destroy udapeople frontend cfn stack and S3 bucket
@@ -171,15 +170,15 @@ jobs:
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
               --tags project=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
-#      - run:
-#          name: Deploy frontend infrastructure
-#          working_directory: .circleci/files
-#          command: |
-#            aws cloudformation deploy \
-#              --template-file frontend.yml \
-#              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-#              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
-#              --tags project=udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+      - run:
+          name: Deploy frontend infrastructure
+          working_directory: .circleci/files
+          command: |
+            aws cloudformation deploy \
+              --template-file frontend.yml \
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: Add backend ip to ansible inventory
           working_directory: .circleci/ansible
@@ -195,9 +194,9 @@ jobs:
           root: .
           paths:
             - .circleci/ansible/inventory
-#      - destroy_environment:
-#          id: ${CIRCLE_WORKFLOW_ID:0:7}
-#          when: on_fail
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
 
   run-migrations:
     executor: node
@@ -236,6 +235,8 @@ jobs:
       - destroy_environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}
           when: on_fail
+      - revert_migrations:
+          when: on_fail
 
   configure-infrastructure:
     executor: python
@@ -255,6 +256,11 @@ jobs:
           name: Configure Server
           working_directory: .circleci/ansible
           command: ansible-playbook -i inventory configure-server.yml -vv
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
+      - revert_migrations:
+          when: on_fail
 
   deploy-backend:
     executor: python
@@ -276,11 +282,11 @@ jobs:
           command: |
             tar -C ../../backend -czvf backend-artifact.tar.gz .
             ansible-playbook -i inventory deploy-server.yml -vv
-#      - destroy_environment:
-#          id: ${CIRCLE_WORKFLOW_ID:0:7}
-#          when: on_fail
-#      - revert_migrations:
-#          when: on_fail
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
+      - revert_migrations:
+          when: on_fail
 
   deploy-frontend:
     executor: node
@@ -307,11 +313,11 @@ jobs:
           name: Deploy frontend objects to S3
           working_directory: frontend
           command: aws s3 cp ./dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
-#      - destroy_environment:
-#          id: ${CIRCLE_WORKFLOW_ID:0:7}
-#          when: on_fail
-#      - revert_migrations:
-#          when: on_fail
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
+      - revert_migrations:
+          when: on_fail
 
   smoke-test:
     executor: python
@@ -345,11 +351,11 @@ jobs:
             URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-east-1.amazonaws.com/index.html"
             echo $URL
             curl -s ${URL} | grep -q "Welcome"
-#      - revert_migrations:
-#          when: on_fail
-#      - destroy_environment:
-#          id: ${CIRCLE_WORKFLOW_ID:0:7}
-#          when: on_fail
+      - revert_migrations:
+          when: on_fail
+      - destroy_environment:
+          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          when: on_fail
 
   cloudfront-update:
     executor: aws
@@ -394,25 +400,25 @@ workflows:
   default:
     jobs:
       - install-backend-dependencies
-      #- install-frontend-dependencies
+      - install-frontend-dependencies
 
       - build-backend:
           requires:
             - install-backend-dependencies
 
-#      - test-backend:
-#          requires:
-#            - build-backend
-#      - test-frontend:
-#          requires:
-#            - install-frontend-dependencies
-#
-#      - scan-backend:
-#          requires:
-#            - test-backend
-#      - scan-frontend:
-#          requires:
-#            - test-frontend
+      - test-backend:
+          requires:
+            - build-backend
+      - test-frontend:
+          requires:
+            - install-frontend-dependencies
+
+      - scan-backend:
+          requires:
+            - test-backend
+      - scan-frontend:
+          requires:
+            - test-frontend
 
       - deploy-infrastructure:
           filters:
@@ -420,31 +426,31 @@ workflows:
               only:
                 - main
           requires:
-            - build-backend
-           # - scan-frontend
+            - scan-backend
+            - scan-frontend
 
-#      - run-migrations:
-#          requires:
-#            - deploy-infrastructure
+      - run-migrations:
+          requires:
+            - deploy-infrastructure
       - configure-infrastructure:
           requires:
             - deploy-infrastructure
       - deploy-backend:
           requires:
             - configure-infrastructure
-#      - deploy-frontend:
-#          requires:
-#            - deploy-infrastructure
-#
-#      - smoke-test:
-#          requires:
-#            - deploy-backend
-#            - deploy-frontend
+      - deploy-frontend:
+          requires:
+            - deploy-infrastructure
 
-#      - cloudfront-update:
-#          requires:
-#            - smoke-test
-#
-#      - cleanup:
-#          requires:
-#            - cloudfront-update
+      - smoke-test:
+          requires:
+            - deploy-backend
+            - deploy-frontend
+
+      - cloudfront-update:
+          requires:
+            - smoke-test
+
+      - cleanup:
+          requires:
+            - cloudfront-update
