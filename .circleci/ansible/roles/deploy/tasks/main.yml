@@ -40,24 +40,24 @@
       production: yes
       state: present
 
-  - name: "Archive Backend"
-    become: yes
-    synchronize:
-      src: backend-artifact.tar.gz
-      dest: /home/ubuntu/
+#  - name: "Copy Archived Backend"
+#    become: yes
+#    synchronize:
+#      src: backend-artifact.tar.gz
+#      dest: /home/ubuntu/
 
-  - name: "Extract Backend"
+  - name: "Copy and Extract Backend"
     become: yes
     unarchive:
-      src: /home/ubuntu/backend-artifact.tar.gz
+      src: backend-artifact.tar.gz
       dest: /home/ubuntu/backend
 
-  - name: "copy backend"
-    become: yes
-    synchronize:
-      src: ../../backend
-      dest: /home/ubuntu/uda_app
-      recursive: true
+#  - name: "copy backend"
+#    become: yes
+#    synchronize:
+#      src: ../../backend
+#      dest: /home/ubuntu/uda_app
+#      recursive: true
 
   - name: "delete anything that might already be running"
     become: true
@@ -67,6 +67,5 @@
   - name: "start server"
     become: true
     args:
-      chdir: /home/ubuntu/uda_app/backend
+      chdir: /home/ubuntu/backend
     command: pm2 start npm -- start
-    environment:
