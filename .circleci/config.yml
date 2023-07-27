@@ -216,6 +216,7 @@ jobs:
           name: Run migrations
           working_directory: backend
           command: |
+            npm install
             npm run migrations > migration_status
             cat migration_status
       - run:
