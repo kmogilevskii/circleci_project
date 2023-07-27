@@ -405,12 +405,12 @@ jobs:
 workflows:
   default:
     jobs:
-#      - install-backend-dependencies
+      - install-backend-dependencies
 #      - install-frontend-dependencies
 #
-#      - build-backend:
-#          requires:
-#            - install-backend-dependencies
+      - build-backend:
+          requires:
+            - install-backend-dependencies
 
 #      - test-backend:
 #          requires:
@@ -431,8 +431,8 @@ workflows:
             branches:
               only:
                 - main
-#          requires:
-#            - build-backend
+          requires:
+            - build-backend
 #            - install-frontend-dependencies
 
       - run-migrations:
