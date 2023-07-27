@@ -216,6 +216,9 @@ jobs:
           name: Run migrations
           working_directory: backend
           command: |
+            echo $TYPEORM_HOST
+            echo $TYPEORM_USERNAME
+            echo $TYPEORM_PASSWORD
             npm install
             npm run migrations > migration_status
             cat migration_status
@@ -434,13 +437,13 @@ workflows:
           requires:
             - build-backend
 #            - install-frontend-dependencies
-
-      - run-migrations:
+      - configure-infrastructure:
           requires:
             - deploy-infrastructure
-#      - configure-infrastructure:
-#          requires:
-#            - deploy-infrastructure
+      - run-migrations:
+          requires:
+            - configure-infrastructure
+
 #      - deploy-backend:
 #          requires:
 #            - configure-infrastructure
