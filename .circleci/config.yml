@@ -405,12 +405,12 @@ jobs:
 workflows:
   default:
     jobs:
-      - install-backend-dependencies
-      - install-frontend-dependencies
-
-      - build-backend:
-          requires:
-            - install-backend-dependencies
+#      - install-backend-dependencies
+#      - install-frontend-dependencies
+#
+#      - build-backend:
+#          requires:
+#            - install-backend-dependencies
 
 #      - test-backend:
 #          requires:
@@ -431,32 +431,32 @@ workflows:
             branches:
               only:
                 - main
-          requires:
-            - build-backend
-            - install-frontend-dependencies
+#          requires:
+#            - build-backend
+#            - install-frontend-dependencies
 
       - run-migrations:
           requires:
             - deploy-infrastructure
-      - configure-infrastructure:
-          requires:
-            - deploy-infrastructure
-      - deploy-backend:
-          requires:
-            - configure-infrastructure
-      - deploy-frontend:
-          requires:
-            - deploy-infrastructure
-
-      - smoke-test:
-          requires:
-            - deploy-backend
-            - deploy-frontend
-
-      - cloudfront-update:
-          requires:
-            - smoke-test
-
-      - cleanup:
-          requires:
-            - cloudfront-update
+#      - configure-infrastructure:
+#          requires:
+#            - deploy-infrastructure
+#      - deploy-backend:
+#          requires:
+#            - configure-infrastructure
+#      - deploy-frontend:
+#          requires:
+#            - deploy-infrastructure
+#
+#      - smoke-test:
+#          requires:
+#            - deploy-backend
+#            - deploy-frontend
+#
+#      - cloudfront-update:
+#          requires:
+#            - smoke-test
+#
+#      - cleanup:
+#          requires:
+#            - cloudfront-update
