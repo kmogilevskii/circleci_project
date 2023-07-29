@@ -429,30 +429,30 @@ workflows:
             - scan-frontend
             - scan-backend
 
-      - deploy-infrastructure:
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - scan-frontend
-            - scan-backend
-
-      - configure-infrastructure:
-          requires:
-            - deploy-infrastructure
-
-      - deploy-backend:
-          requires:
-            - configure-infrastructure
-      - deploy-frontend:
-          requires:
-            - deploy-infrastructure
-
-      - smoke-test:
-          requires:
-            - deploy-backend
-            - deploy-frontend
+#      - deploy-infrastructure:
+#          filters:
+#            branches:
+#              only:
+#                - main
+#          requires:
+#            - scan-frontend
+#            - scan-backend
+#
+#      - configure-infrastructure:
+#          requires:
+#            - deploy-infrastructure
+#
+#      - deploy-backend:
+#          requires:
+#            - configure-infrastructure
+#      - deploy-frontend:
+#          requires:
+#            - deploy-infrastructure
+#
+#      - smoke-test:
+#          requires:
+#            - deploy-backend
+#            - deploy-frontend
 #
 #      - cloudfront-update:
 #          requires:
