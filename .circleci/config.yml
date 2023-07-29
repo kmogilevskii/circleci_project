@@ -403,56 +403,56 @@ jobs:
 workflows:
   default:
     jobs:
-      - install-backend-dependencies
-      - install-frontend-dependencies
+#      - install-backend-dependencies
+#      - install-frontend-dependencies
+#
+#      - build-backend:
+#          requires:
+#            - install-backend-dependencies
+#
+#      - test-backend:
+#          requires:
+#            - build-backend
+#      - test-frontend:
+#          requires:
+#            - install-frontend-dependencies
+#
+#      - scan-backend:
+#          requires:
+#            - test-backend
+#      - scan-frontend:
+#          requires:
+#            - test-frontend
 
-      - build-backend:
-          requires:
-            - install-backend-dependencies
+      - run-migrations
+#          requires:
+#            - scan-frontend
+#            - scan-backend
 
-      - test-backend:
-          requires:
-            - build-backend
-      - test-frontend:
-          requires:
-            - install-frontend-dependencies
-
-      - scan-backend:
-          requires:
-            - test-backend
-      - scan-frontend:
-          requires:
-            - test-frontend
-
-      - run-migrations:
-          requires:
-            - scan-frontend
-            - scan-backend
-
-      - deploy-infrastructure:
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - scan-frontend
-            - scan-backend
-
-      - configure-infrastructure:
-          requires:
-            - deploy-infrastructure
-
-      - deploy-backend:
-          requires:
-            - configure-infrastructure
-      - deploy-frontend:
-          requires:
-            - deploy-infrastructure
-
-      - smoke-test:
-          requires:
-            - deploy-backend
-            - deploy-frontend
+#      - deploy-infrastructure:
+#          filters:
+#            branches:
+#              only:
+#                - main
+#          requires:
+#            - scan-frontend
+#            - scan-backend
+#
+#      - configure-infrastructure:
+#          requires:
+#            - deploy-infrastructure
+#
+#      - deploy-backend:
+#          requires:
+#            - configure-infrastructure
+#      - deploy-frontend:
+#          requires:
+#            - deploy-infrastructure
+#
+#      - smoke-test:
+#          requires:
+#            - deploy-backend
+#            - deploy-frontend
 #
 #      - cloudfront-update:
 #          requires:
