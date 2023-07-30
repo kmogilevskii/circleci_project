@@ -22,10 +22,10 @@ commands:
       id:
         type: string
     steps:
-#      - run:
-#          name: Destroy Udapeople Backend CFN Stack
-#          command: aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >>
-#          when: << parameters.when >>
+      - run:
+          name: Destroy Udapeople Backend CFN Stack
+          command: aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >>
+          when: << parameters.when >>
       - run:
           name: Destroy udapeople frontend cfn stack and S3 bucket
           command: |
@@ -223,7 +223,7 @@ jobs:
           name: Send migration results to AWS Secret Manager
           working_directory: backend
           command: |
-            if grep -q "has been executed successfully" migration_status
+            if grep -q -e "has been executed successfully" -e "migrations are pending" migration_status
             then
               echo "DB migration was successful, will update AWS Secret Manager..."
               aws secretsmanager put-secret-value --secret-id udacity-migration-status --secret-string "success"
@@ -403,56 +403,56 @@ jobs:
 workflows:
   default:
     jobs:
-#      - install-backend-dependencies
-#      - install-frontend-dependencies
-#
-#      - build-backend:
-#          requires:
-#            - install-backend-dependencies
-#
-#      - test-backend:
-#          requires:
-#            - build-backend
-#      - test-frontend:
-#          requires:
-#            - install-frontend-dependencies
-#
-#      - scan-backend:
-#          requires:
-#            - test-backend
-#      - scan-frontend:
-#          requires:
-#            - test-frontend
+      - install-backend-dependencies
+      - install-frontend-dependencies
 
-      - run-migrations
-#          requires:
-#            - scan-frontend
-#            - scan-backend
+      - build-backend:
+          requires:
+            - install-backend-dependencies
 
-#      - deploy-infrastructure:
-#          filters:
-#            branches:
-#              only:
-#                - main
-#          requires:
-#            - scan-frontend
-#            - scan-backend
-#
-#      - configure-infrastructure:
-#          requires:
-#            - deploy-infrastructure
-#
-#      - deploy-backend:
-#          requires:
-#            - configure-infrastructure
-#      - deploy-frontend:
-#          requires:
-#            - deploy-infrastructure
-#
-#      - smoke-test:
-#          requires:
-#            - deploy-backend
-#            - deploy-frontend
+      - test-backend:
+          requires:
+            - build-backend
+      - test-frontend:
+          requires:
+            - install-frontend-dependencies
+
+      - scan-backend:
+          requires:
+            - test-backend
+      - scan-frontend:
+          requires:
+            - test-frontend
+
+      - run-migrations:
+          requires:
+            - scan-frontend
+            - scan-backend
+
+      - deploy-infrastructure:
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - scan-frontend
+            - scan-backend
+
+      - configure-infrastructure:
+          requires:
+            - deploy-infrastructure
+
+      - deploy-backend:
+          requires:
+            - configure-infrastructure
+      - deploy-frontend:
+          requires:
+            - deploy-infrastructure
+
+      - smoke-test:
+          requires:
+            - deploy-backend
+            - deploy-frontend
 #
 #      - cloudfront-update:
 #          requires:
